@@ -130,8 +130,26 @@ router.get('/trophies/me', async (req, res) => {
     if (!accountId) return res.status(500).json({ error: 'ID de cuenta no encontrado.' });
 
     try {
-        const titles = await getUserTitles({ accessToken }, accountId, { limit: 32 });
-        res.json(titles);
+        // Fetch ALL titles by paginating through the PSN API
+        const PAGE_SIZE = 800;
+        let offset = 0;
+        let allTitles = [];
+        let totalCount = null;
+
+        do {
+            const page = await getUserTitles({ accessToken }, accountId, { limit: PAGE_SIZE, offset });
+            if (totalCount === null) {
+                totalCount = page.totalItemCount || 0;
+            }
+            const batch = page.trophyTitles || [];
+            allTitles = allTitles.concat(batch);
+            offset += batch.length;
+
+            // Stop if we got everything or the page returned nothing new
+            if (batch.length === 0 || allTitles.length >= totalCount) break;
+        } while (true);
+
+        res.json({ trophyTitles: allTitles, totalItemCount: allTitles.length });
     } catch (error) {
         console.error("[TROPHIES ERROR]", error.message);
         res.status(500).json({ error: "Error de Sony: " + error.message });
