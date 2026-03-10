@@ -1,11 +1,13 @@
 # 🎮 PSN Trophy Viewer
 
-A modern, high-performance React application for viewing your PlayStation Network trophies with detailed statistics, smart grouping, and automatic translations.
+A modern, high-performance React application for viewing your PlayStation Network trophies with detailed statistics, smart grouping, automatic translations, and a premium neon UI.
 
 ![React](https://img.shields.io/badge/React-18.3-61dafb?style=flat&logo=react)
 ![Vite](https://img.shields.io/badge/Vite-5.4-646cff?style=flat&logo=vite)
 ![Vercel](https://img.shields.io/badge/Vercel-Deployed-black?style=flat&logo=vercel)
 ![Node](https://img.shields.io/badge/Node-Express-339933?style=flat&logo=node.js)
+
+![PSN Trophies Dashboard](./public/screenshots/dashboard.png)
 
 ## ✨ Features
 
@@ -16,20 +18,20 @@ A modern, high-performance React application for viewing your PlayStation Networ
 - **Multi-Device**: Works seamlessly on PC and Mobile.
 
 ### 🏆 Advanced Trophy Tracking
-- **User Profile**: Real-time display of avatar, level (with progress bar), and full trophy counts.
+- **Complete Library Sync**: Bypasses standard limits to load your **entire** game library history using PSN API pagination.
+- **User Profile**: Real-time display of avatar, level, and full trophy counts.
 - **Smart Grouping**: Automatically separates base game trophies from DLC/Add-on packs.
-- **Spanish Translation**: Automatic machine translation for all trophy descriptions using a backend proxy.
-- **Auto-Sorting**: Trophies are sorted by rarity (rarest first) to help you track complex achievements.
+- **Total Points System**: Calculates and displays the earned vs. total PSN points per DLC/Game (Platinum=300, Gold=90, Silver=30, Bronze=15).
+- **Spanish Translation**: Automatic machine translation for all trophy titles and descriptions, displayed elegantly inline.
+- **Auto-Sorting**: Trophies are automatically sorted by rarity (rarest first) for a better overview.
 
-### 🎯 Pro Dashboard
+### 🎯 Pro Dashboard & UI
+- **Neon Highlights**: Games with a Platinum trophy glow with a triple-layered cyan/blue neon effect. Games with 100% completion (but no platinum) glow with a premium gold aesthetic.
+- **Responsive Layout**: perfectly centered interfaces (`flex`, `items-center`) that adapt naturally to ultra-wide displays and smartphones.
 - **Platform Badges**: Visual indicators for PS5, PS4, PS3, and Vita titles.
-- **Platinum Highlight**: Games you've platinumed are highlighted with a distinct premium border.
-- **Real-time Stats**: Track your completion percentage for every game and DLC group.
+- **Smooth UX**: Powered by Framer Motion for elegant hover behaviors, scale effects, and transitions.
 
-### 🎨 Premium Design
-- **Dark Mode Aesthetic**: Sleek gaming-inspired interface with glassmorphism effects.
-- **Mobile First**: Fully responsive design that works perfectly on smartphones.
-- **Smooth UX**: Powered by Framer Motion for premium feel and transitions.
+![PSN Trophies Game Detail](./public/screenshots/game_detail.png)
 
 ## 🛠️ Tech Stack
 
@@ -82,8 +84,8 @@ This project is pre-configured for **Vercel**:
 psn-react/
 ├── api/                # Vercel Serverless Functions (Backend)
 ├── src/
-│   ├── components/     # UI Building blocks
-│   ├── pages/          # Full page views (Login, Dashboard, Game)
+│   ├── components/     # UI Building blocks (TrophyCard, UserProfile)
+│   ├── pages/          # Full page views (Login, GameTrophies, Home)
 │   ├── App.jsx         # Routing & Auth Logic
 │   └── index.css       # Tailwind & Global styles
 ├── server.js           # Local Express proxy server
