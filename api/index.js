@@ -149,6 +149,9 @@ router.get('/trophies/me', async (req, res) => {
             if (batch.length === 0 || allTitles.length >= totalCount) break;
         } while (true);
 
+        // Sort by last played (lastUpdatedDateTime) instead of last trophy earned
+        allTitles.sort((a, b) => new Date(b.lastUpdatedDateTime) - new Date(a.lastUpdatedDateTime));
+
         res.json({ trophyTitles: allTitles, totalItemCount: allTitles.length });
     } catch (error) {
         console.error("[TROPHIES ERROR]", error.message);
