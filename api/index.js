@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import * as psnApi from 'psn-api';
-const { exchangeNpssoForCode, exchangeCodeForAccessToken, getUserTitles, getProfileFromAccountId, getUserTrophyProfileSummary, getUserTrophiesEarnedForTitle, getTitleTrophies, getTitleTrophyGroups } = psnApi;
+const { exchangeNpssoForCode, exchangeCodeForAccessToken, getUserTitles, getProfileFromAccountId, getUserTrophyProfileSummary, getUserTrophiesEarnedForTitle, getTitleTrophies, getTitleTrophyGroups, getUserPlayedGames } = psnApi;
 import * as translatePkg from 'translate-google-api';
 const translate = translatePkg.default || translatePkg;
 
@@ -149,6 +149,43 @@ router.get('/trophies/me', async (req, res) => {
             if (batch.length === 0 || allTitles.length >= totalCount) break;
         } while (true);
 
+        // Fetch played games to get playDuration, paginating if needed
+        let playedGamesMap = {};
+        let playedGamesByName = {};
+        try {
+            let pgOffset = 0;
+            let pgTotal = null;
+            do {
+                const pgPage = await getUserPlayedGames({ accessToken }, 'me', { limit: 200, offset: pgOffset });
+                if (pgTotal === null) pgTotal = pgPage.totalItemCount || 0;
+                const pgBatch = pgPage.titles || [];
+                pgBatch.forEach(g => {
+                    const duration = g.playDuration || null;
+                    if (duration) {
+                        playedGamesMap[g.titleId] = duration;
+                        if (g.concept?.titleIds) {
+                            g.concept.titleIds.forEach(tid => { playedGamesMap[tid] = duration; });
+                        }
+                        if (g.name) playedGamesByName[g.name.toLowerCase()] = duration;
+                        if (g.localizedName) playedGamesByName[g.localizedName.toLowerCase()] = duration;
+                    }
+                });
+                pgOffset += pgBatch.length;
+                if (pgBatch.length === 0 || pgOffset >= pgTotal) break;
+            } while (true);
+        } catch (pgErr) {
+            console.warn('[PLAYED GAMES] Could not fetch play durations:', pgErr.message);
+        }
+
+        // Merge playDuration into each trophy title (by ID or name fallback)
+        allTitles = allTitles.map(t => ({
+            ...t,
+            playDuration:
+                playedGamesMap[t.npCommunicationId] ||
+                playedGamesByName[t.trophyTitleName?.toLowerCase()] ||
+                null
+        }));
+
         // Sort by last played (lastUpdatedDateTime) instead of last trophy earned
         allTitles.sort((a, b) => new Date(b.lastUpdatedDateTime) - new Date(a.lastUpdatedDateTime));
 
@@ -188,6 +225,7 @@ router.get('/titles/:npCommunicationId/trophies', async (req, res) => {
             const earned = userTrophies.trophies.find(u => u.trophyId === t.trophyId);
             return {
                 ...t,
+                ...earned,
                 earned: earned ? earned.earned : false,
                 earnedDateTime: earned ? earned.earnedDateTime : null,
                 trophyEarnedRate: earned ? earned.trophyEarnedRate : (t.trophyEarnedRate || "0.0")

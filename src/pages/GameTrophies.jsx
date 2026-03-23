@@ -267,16 +267,23 @@ const GameTrophies = () => {
                                                             <span className="text-sm font-normal text-blue-300 italic"> · {trophy.trophyNameEs}</span>
                                                         )}
                                                     </h3>
-                                                    <div className="flex flex-col items-end ml-2 shrink-0">
-                                                        <span className={`text-xs px-2 py-1 rounded font-mono uppercase tracking-wider
-                                                            ${trophy.trophyType === 'platinum' ? 'bg-blue-500/20 text-blue-300' :
-                                                                trophy.trophyType === 'gold' ? 'bg-yellow-500/20 text-yellow-300' :
-                                                                    trophy.trophyType === 'silver' ? 'bg-gray-400/20 text-gray-300' :
-                                                                        'bg-orange-500/20 text-orange-300'
-                                                            }`}>
-                                                            {trophy.trophyType}
-                                                        </span>
-                                                        <span className="text-[10px] text-gray-500 mt-1">{trophy.trophyEarnedRate}%</span>
+                                                    <div className="flex items-center shrink-0">
+                                                        {trophy.trophyProgressTargetValue > 1 && (
+                                                            <div className="text-lg font-bold mr-4 text-gray-300">
+                                                                {trophy.progress || 0}/{trophy.trophyProgressTargetValue}
+                                                            </div>
+                                                        )}
+                                                        <div className="flex flex-col items-end ml-2">
+                                                            <span className={`text-xs px-2 py-1 rounded font-mono uppercase tracking-wider
+                                                                ${trophy.trophyType === 'platinum' ? 'bg-blue-500/20 text-blue-300' :
+                                                                    trophy.trophyType === 'gold' ? 'bg-yellow-500/20 text-yellow-300' :
+                                                                        trophy.trophyType === 'silver' ? 'bg-gray-400/20 text-gray-300' :
+                                                                            'bg-orange-500/20 text-orange-300'
+                                                                }`}>
+                                                                {trophy.trophyType}
+                                                            </span>
+                                                            <span className="text-[10px] text-gray-500 mt-1">{trophy.trophyEarnedRate}%</span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 <p className="text-gray-400 text-sm">{trophy.trophyDetail}</p>

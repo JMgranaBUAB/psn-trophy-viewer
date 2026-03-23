@@ -3,11 +3,25 @@ import { motion } from 'framer-motion';
 import { Trophy } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+// Parse ISO 8601 duration (PT228H56M33S) → "228h 56min" or "45min"
+const parsePlayDuration = (duration) => {
+    if (!duration) return null;
+    const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+    if (!match) return null;
+    const hours = parseInt(match[1] || '0', 10);
+    const minutes = parseInt(match[2] || '0', 10);
+    if (hours === 0 && minutes === 0) return null;
+    if (hours === 0) return `${minutes}min`;
+    if (minutes === 0) return `${hours}h`;
+    return `${hours}h ${minutes}min`;
+};
+
 const TrophyCard = ({ title }) => {
     // Check if platinum trophy is earned
     const hasPlatinum = title.earnedTrophies?.platinum > 0;
     const is100 = title.progress === 100;
     const isSpecial = hasPlatinum || is100;
+    const playTime = parsePlayDuration(title.playDuration);
 
     // Neon style: platinum = cyan/blue, 100% without platinum = gold
     const neonColor = hasPlatinum
@@ -106,6 +120,12 @@ const TrophyCard = ({ title }) => {
                         ></div>
                     </div>
                     <p className="text-xs text-gray-400 mt-1 text-right">{title.progress}% completado</p>
+                    {playTime && (
+                        <p className="text-xs text-gray-500 mt-0.5 text-right flex items-center justify-end gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            {playTime}
+                        </p>
+                    )}
                 </div>
             </motion.div>
         </Link>
