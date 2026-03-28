@@ -84,7 +84,7 @@ function Dashboard() {
         <header className="flex items-center justify-between mb-12">
           <div className="flex items-center space-x-2">
             <Gamepad2 className="text-purple-500" size={32} />
-            <h1 className="text-2xl font-bold tracking-tight">PSN <span className="text-purple-400">Trophies</span></h1>
+            <h1 className="text-2xl font-bold tracking-tight">PSN <span className="text-purple-400">Trophy Viewer</span></h1>
           </div>
           <div className="flex items-center gap-3">
             <Link
