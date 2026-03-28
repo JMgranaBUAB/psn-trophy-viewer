@@ -7,7 +7,7 @@ A modern, high-performance React application for viewing your PlayStation Networ
 ![Vercel](https://img.shields.io/badge/Vercel-Deployed-black?style=flat&logo=vercel)
 ![Node](https://img.shields.io/badge/Node-Express-339933?style=flat&logo=node.js)
 
-![PSN Trophies Dashboard](./public/screenshots/dashboard.png)
+![PSN Trophy Viewer Dashboard](./public/screenshots/dashboard.png)
 
 ## ✨ Features
 
@@ -17,9 +17,10 @@ A modern, high-performance React application for viewing your PlayStation Networ
 - **Persistence**: Remembers your session using secure local storage.
 - **Multi-Device**: Works seamlessly on PC and Mobile.
 
-### 🏆 Advanced Trophy Tracking
+### 🏆 Advanced Trophy & Stats Tracking
 - **Complete Library Sync**: Bypasses standard limits to load your **entire** game library history using PSN API pagination.
-- **User Profile**: Real-time display of avatar, level, and full trophy counts.
+- **Play Time Tracking**: Matches and displays total hours played across your games (works automatically for PS4/PS5 titles with playtime data recorded by PSN).
+- **Top 20 Leaderboard**: A dedicated page showcasing your top 20 most played games, featuring animated progress bars and premium podium styling.
 - **Smart Grouping**: Automatically separates base game trophies from DLC/Add-on packs.
 - **Total Points System**: Calculates and displays the earned vs. total PSN points per DLC/Game (Platinum=300, Gold=90, Silver=30, Bronze=15).
 - **Spanish Translation**: Automatic machine translation for all trophy titles and descriptions, displayed elegantly inline.
@@ -31,7 +32,7 @@ A modern, high-performance React application for viewing your PlayStation Networ
 - **Platform Badges**: Visual indicators for PS5, PS4, PS3, and Vita titles.
 - **Smooth UX**: Powered by Framer Motion for elegant hover behaviors, scale effects, and transitions.
 
-![PSN Trophies Game Detail](./public/screenshots/game_detail.png)
+![PSN Trophy Viewer Game Detail](./public/screenshots/game_detail.png)
 
 ## 🛠️ Tech Stack
 
