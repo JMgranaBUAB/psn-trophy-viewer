@@ -122,16 +122,35 @@ const TopGames = () => {
                                 >
                                     <Link to={`/game/${title.npCommunicationId}`}>
                                         <div
-                                            className={`relative flex items-center gap-4 rounded-2xl p-4 bg-white/5 backdrop-blur-sm border transition-all duration-200 hover:bg-white/10 hover:scale-[1.01] ${medal ? `border ${medal.border}` : 'border-white/10'}`}
-                                            style={medal ? { boxShadow: medal.glow } : {}}
+                                            className={`relative overflow-hidden flex items-center gap-4 rounded-2xl p-4 backdrop-blur-sm border transition-all duration-200 hover:scale-[1.01] ${
+                                                medal
+                                                    ? `border ${medal.border} ${hasPlatinum ? 'bg-cyan-950/30' : 'bg-white/5'} hover:bg-white/10`
+                                                    : hasPlatinum
+                                                        ? 'border-cyan-500/40 bg-gradient-to-r from-cyan-950/40 via-blue-950/30 to-slate-900/40 hover:from-cyan-950/50 hover:via-blue-950/40 hover:to-slate-900/50'
+                                                        : 'border-white/10 bg-white/5 hover:bg-white/10'
+                                            }`}
+                                            style={
+                                                medal
+                                                    ? { boxShadow: medal.glow }
+                                                    : hasPlatinum
+                                                        ? { boxShadow: '0 0 15px 2px rgba(96, 200, 255, 0.15), inset 0 0 30px 0px rgba(96, 200, 255, 0.05)' }
+                                                        : {}
+                                            }
                                         >
+                                            {/* Platinum shimmer overlay */}
+                                            {hasPlatinum && (
+                                                <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl">
+                                                    <div className="absolute -inset-full animate-[shimmer_3s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-cyan-400/5 to-transparent" style={{ animationDelay: `${index * 0.2}s` }} />
+                                                </div>
+                                            )}
+
                                             {/* Rank number */}
-                                            <div className={`flex-shrink-0 w-10 text-center ${medal ? medal.text : 'text-gray-500'} font-bold text-lg`}>
+                                            <div className={`flex-shrink-0 w-10 text-center ${medal ? medal.text : hasPlatinum ? 'text-cyan-400' : 'text-gray-500'} font-bold text-lg`}>
                                                 {medal ? medal.icon : `#${index + 1}`}
                                             </div>
 
                                             {/* Game image */}
-                                            <div className="flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden">
+                                            <div className={`flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden ${hasPlatinum ? 'ring-1 ring-cyan-500/30' : ''}`}>
                                                 <img
                                                     src={title.trophyTitleIconUrl}
                                                     alt={title.trophyTitleName}
@@ -142,9 +161,9 @@ const TopGames = () => {
                                             {/* Game info */}
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2 mb-1">
-                                                    <span className="font-semibold text-sm truncate">{title.trophyTitleName}</span>
+                                                    <span className={`font-semibold text-sm truncate ${hasPlatinum ? 'text-cyan-50' : ''}`}>{title.trophyTitleName}</span>
                                                     {hasPlatinum && (
-                                                        <span className="flex-shrink-0 flex items-center gap-1 text-[10px] bg-blue-500/20 text-blue-300 border border-blue-500/30 px-1.5 py-0.5 rounded-full">
+                                                        <span className="flex-shrink-0 flex items-center gap-1 text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-1.5 py-0.5 rounded-full">
                                                             <Trophy size={9} />Platino
                                                         </span>
                                                     )}
@@ -155,27 +174,31 @@ const TopGames = () => {
                                                         initial={{ width: 0 }}
                                                         animate={{ width: `${pct}%` }}
                                                         transition={{ duration: 0.8, delay: index * 0.04 + 0.3, ease: 'easeOut' }}
-                                                        className={`h-full rounded-full ${medal
-                                                            ? index === 0
-                                                                ? 'bg-gradient-to-r from-yellow-400 to-amber-500'
-                                                                : index === 1
-                                                                    ? 'bg-gradient-to-r from-slate-300 to-slate-400'
-                                                                    : 'bg-gradient-to-r from-amber-600 to-orange-500'
-                                                            : 'bg-gradient-to-r from-purple-500 to-blue-500'}`}
+                                                        className={`h-full rounded-full ${
+                                                            medal
+                                                                ? index === 0
+                                                                    ? 'bg-gradient-to-r from-yellow-400 to-amber-500'
+                                                                    : index === 1
+                                                                        ? 'bg-gradient-to-r from-slate-300 to-slate-400'
+                                                                        : 'bg-gradient-to-r from-amber-600 to-orange-500'
+                                                                : hasPlatinum
+                                                                    ? 'bg-gradient-to-r from-cyan-400 to-blue-500'
+                                                                    : 'bg-gradient-to-r from-purple-500 to-blue-500'
+                                                        }`}
                                                     />
                                                 </div>
                                                 <div className="flex items-center justify-between mt-1">
-                                                    <span className="text-[10px] text-gray-500">{title.progress}% trofeos</span>
+                                                    <span className={`text-[10px] ${hasPlatinum ? 'text-cyan-500/60' : 'text-gray-500'}`}>{title.progress}% trofeos</span>
                                                 </div>
                                             </div>
 
                                             {/* Time played */}
-                                            <div className={`flex-shrink-0 text-right ${medal ? medal.text : 'text-gray-300'}`}>
+                                            <div className={`flex-shrink-0 text-right ${medal ? medal.text : hasPlatinum ? 'text-cyan-300' : 'text-gray-300'}`}>
                                                 <div className="flex items-center gap-1 justify-end">
                                                     <Clock size={13} />
                                                     <span className="font-bold text-base">{timeStr}</span>
                                                 </div>
-                                                <div className="text-[10px] text-gray-500 mt-0.5">jugadas</div>
+                                                <div className={`text-[10px] mt-0.5 ${hasPlatinum ? 'text-cyan-500/50' : 'text-gray-500'}`}>jugadas</div>
                                             </div>
                                         </div>
                                     </Link>

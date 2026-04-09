@@ -151,7 +151,8 @@ router.get('/trophies/me', async (req, res) => {
 
         // Fetch played games to get playDuration, paginating if needed
         let playedGamesMap = {};
-        let playedGamesByName = {};
+        let playedGamesByNamePlatform = {}; // name+platform → duration
+        let playedGamesByName = {};         // name → duration (fallback)
         try {
             let pgOffset = 0;
             let pgTotal = null;
@@ -163,11 +164,18 @@ router.get('/trophies/me', async (req, res) => {
                     const duration = g.playDuration || null;
                     if (duration) {
                         playedGamesMap[g.titleId] = duration;
-                        if (g.concept?.titleIds) {
-                            g.concept.titleIds.forEach(tid => { playedGamesMap[tid] = duration; });
+                        // Map by name+platform for PS4/PS5 distinction
+                        const cat = g.category || '';
+                        if (g.name) {
+                            const key = g.name.toLowerCase() + '|' + cat;
+                            playedGamesByNamePlatform[key] = duration;
+                            playedGamesByName[g.name.toLowerCase()] = duration;
                         }
-                        if (g.name) playedGamesByName[g.name.toLowerCase()] = duration;
-                        if (g.localizedName) playedGamesByName[g.localizedName.toLowerCase()] = duration;
+                        if (g.localizedName) {
+                            const key = g.localizedName.toLowerCase() + '|' + cat;
+                            playedGamesByNamePlatform[key] = duration;
+                            playedGamesByName[g.localizedName.toLowerCase()] = duration;
+                        }
                     }
                 });
                 pgOffset += pgBatch.length;
@@ -177,14 +185,23 @@ router.get('/trophies/me', async (req, res) => {
             console.warn('[PLAYED GAMES] Could not fetch play durations:', pgErr.message);
         }
 
-        // Merge playDuration into each trophy title (by ID or name fallback)
-        allTitles = allTitles.map(t => ({
-            ...t,
-            playDuration:
-                playedGamesMap[t.npCommunicationId] ||
-                playedGamesByName[t.trophyTitleName?.toLowerCase()] ||
-                null
-        }));
+        // Merge playDuration into each trophy title
+        // Tiered fallback: titleId → name+platform → name only
+        allTitles = allTitles.map(t => {
+            const plat = t.trophyTitlePlatform || '';
+            const cat = plat.includes('PS5') ? 'ps5_native_game'
+                      : plat.includes('PS4') ? 'ps4_game'
+                      : '';
+            const nameLower = t.trophyTitleName?.toLowerCase();
+            return {
+                ...t,
+                playDuration:
+                    playedGamesMap[t.npCommunicationId] ||
+                    (nameLower && cat ? playedGamesByNamePlatform[nameLower + '|' + cat] : null) ||
+                    (nameLower ? playedGamesByName[nameLower] : null) ||
+                    null
+            };
+        });
 
         // Sort by last played (lastUpdatedDateTime) instead of last trophy earned
         allTitles.sort((a, b) => new Date(b.lastUpdatedDateTime) - new Date(a.lastUpdatedDateTime));
@@ -235,11 +252,7 @@ router.get('/titles/:npCommunicationId/trophies', async (req, res) => {
         // Comprehensive Translation Support
         const translationTasks = [];
 
-        // 1. Game Title
-        const titleKey = `title_${npCommunicationId}`;
-        if (!translationCache.has(titleKey)) {
-            translationTasks.push({ key: titleKey, text: titleName, type: 'title' });
-        }
+        // Game title: NOT translated (keep original name)
 
         // 2. Trophy Groups
         for (const [groupId, groupName] of Object.entries(trophyGroups)) {
@@ -290,7 +303,7 @@ router.get('/titles/:npCommunicationId/trophies', async (req, res) => {
 
         res.json({
             trophies: finalTrophies,
-            titleName: translationCache.get(titleKey) || titleName,
+            titleName: titleName,
             platform: titleInfo?.trophyTitlePlatform || '',
             trophyGroups: finalTrophyGroups
         });
