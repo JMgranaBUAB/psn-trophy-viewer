@@ -175,7 +175,7 @@ const GameTrophies = () => {
 
                                 {/* Trophy Statistics */}
                                 <div className="mb-4 p-4 bg-white/5 rounded-lg border border-white/10">
-                                    <div className="grid grid-cols-4 gap-4 text-center">
+                                    <div className="flex flex-wrap justify-center gap-8 text-center">
                                         {['platinum', 'gold', 'silver', 'bronze'].map(type => {
                                             const total = trophies.filter(t => t.trophyType === type).length;
                                             const earned = trophies.filter(t => t.trophyType === type && t.earned).length;
