@@ -7,6 +7,7 @@ import TrophyList from './components/TrophyList';
 import GameTrophies from './pages/GameTrophies';
 import TopGames from './pages/TopGames';
 import Login from './pages/Login';
+import ProfileWidget from './pages/ProfileWidget';
 
 // Configure global axios defaults for consistency
 axios.defaults.timeout = 10000; // 10 seconds global timeout
@@ -261,6 +262,7 @@ function App() {
         <Route path="/" element={isAuth ? <Dashboard /> : <Login onLoginSuccess={() => setIsAuth(true)} />} />
         <Route path="/game/:npCommunicationId" element={isAuth ? <GameTrophies /> : <Login onLoginSuccess={() => setIsAuth(true)} />} />
         <Route path="/top" element={isAuth ? <TopGames /> : <Login onLoginSuccess={() => setIsAuth(true)} />} />
+        <Route path="/widget" element={isAuth ? <ProfileWidget /> : <Login onLoginSuccess={() => setIsAuth(true)} />} />
       </Routes>
     </Router>
   );

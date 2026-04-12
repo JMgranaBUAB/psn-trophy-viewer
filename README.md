@@ -27,6 +27,7 @@ A modern, high-performance React application for viewing your PlayStation Networ
 - **Auto-Sorting**: Trophies are automatically sorted by rarity (rarest first) for a better overview.
 
 ### 🎯 Pro Dashboard & UI
+- **Live Profile Widget**: A standalone, auto-refreshing profile card route (`/widget`) designed specifically for OBS overlays, secondary monitors, or streaming setups (refreshes every 5 minutes).
 - **Neon Highlights**: Games with a Platinum trophy glow with a triple-layered cyan/blue neon effect. Games with 100% completion (but no platinum) glow with a premium gold aesthetic.
 - **Responsive Layout**: perfectly centered interfaces (`flex`, `items-center`) that adapt naturally to ultra-wide displays and smartphones.
 - **Platform Badges**: Visual indicators for PS5, PS4, PS3, and Vita titles.
