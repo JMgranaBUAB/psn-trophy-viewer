@@ -1,12 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import UserProfile from '../components/UserProfile';
+
+const REFRESH_INTERVAL = 300; // seconds (5 min)
 
 const ProfileWidget = () => {
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [secondsSince, setSecondsSince] = useState(0);
+    const lastRefreshRef = useRef(Date.now());
 
     const fetchProfile = async () => {
         try {
@@ -27,26 +31,43 @@ const ProfileWidget = () => {
             setError("Error loading profile");
         } finally {
             setLoading(false);
+            lastRefreshRef.current = Date.now();
+            setSecondsSince(0);
         }
     };
 
     useEffect(() => {
-        // Fetch initially
         fetchProfile();
 
-        // Set up interval for every 5 minutes (300000 ms)
-        const intervalId = setInterval(() => {
-            fetchProfile();
-        }, 300000);
+        // Auto-refresh every 5 minutes
+        const fetchInterval = setInterval(fetchProfile, REFRESH_INTERVAL * 1000);
 
-        // Cleanup interval on unmount
-        return () => clearInterval(intervalId);
+        // Tick the elapsed time counter every second
+        const tickInterval = setInterval(() => {
+            const elapsed = Math.floor((Date.now() - lastRefreshRef.current) / 1000);
+            setSecondsSince(elapsed);
+        }, 1000);
+
+        return () => {
+            clearInterval(fetchInterval);
+            clearInterval(tickInterval);
+        };
     }, []);
 
-    // Widget specific clean background
+    const remaining = Math.max(REFRESH_INTERVAL - secondsSince, 0);
+
+    const formatRemaining = (s) => {
+        if (s < 60) return `${s}s`;
+        const m = Math.floor(s / 60);
+        const rem = s % 60;
+        return `${m}m ${rem.toString().padStart(2, '0')}s`;
+    };
+
+    const progress = Math.max(100 - (secondsSince / REFRESH_INTERVAL) * 100, 0);
+
     return (
-        <div className="min-h-screen bg-[#0f0f15] text-white flex items-center justify-center p-6 bg-transparent">
-             {loading && !profile ? (
+        <div className="min-h-screen bg-[#0f0f15] text-white flex flex-col items-center justify-center p-6">
+            {loading && !profile ? (
                 <div className="flex flex-col items-center justify-center">
                     <Loader2 className="animate-spin text-purple-500 mb-4" size={32} />
                 </div>
@@ -58,6 +79,20 @@ const ProfileWidget = () => {
             ) : profile ? (
                 <div className="w-full max-w-4xl animate-in fade-in zoom-in-95 duration-500">
                     <UserProfile profile={profile} />
+
+                    {/* Countdown bar */}
+                    <div className="flex items-center gap-3 px-1">
+                        <RefreshCw size={11} className="text-gray-600 flex-shrink-0" />
+                        <div className="flex-1 bg-white/5 rounded-full h-1 overflow-hidden">
+                            <div
+                                className="h-full bg-gradient-to-r from-purple-600 to-purple-400 rounded-full transition-none"
+                                style={{ width: `${progress}%` }}
+                            />
+                        </div>
+                        <span className="text-[11px] text-gray-600 font-mono tabular-nums w-14 text-right">
+                            {formatRemaining(remaining)}
+                        </span>
+                    </div>
                 </div>
             ) : null}
         </div>

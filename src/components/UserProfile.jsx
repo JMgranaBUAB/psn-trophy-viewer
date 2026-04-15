@@ -1,5 +1,39 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useRef, useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+// Animated number that slides vertically when the value changes
+const SlideNumber = ({ value, className }) => {
+    const [displayValue, setDisplayValue] = useState(value);
+    const [direction, setDirection] = useState(1); // 1 = slide up (increase), -1 = slide down (decrease)
+    const [key, setKey] = useState(0);
+    const prevRef = useRef(value);
+
+    useEffect(() => {
+        if (value !== prevRef.current) {
+            setDirection(value > prevRef.current ? 1 : -1);
+            setKey(k => k + 1);
+            setDisplayValue(value);
+            prevRef.current = value;
+        }
+    }, [value]);
+
+    return (
+        <div className="overflow-hidden inline-flex items-center" style={{ lineHeight: 1 }}>
+            <AnimatePresence mode="popLayout" initial={false}>
+                <motion.span
+                    key={key}
+                    initial={{ y: direction * -20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: direction * 20, opacity: 0 }}
+                    transition={{ duration: 0.35, ease: 'easeOut' }}
+                    className={className}
+                >
+                    {displayValue}
+                </motion.span>
+            </AnimatePresence>
+        </div>
+    );
+};
 
 const UserProfile = ({ profile }) => {
     if (!profile) return null;
@@ -17,11 +51,17 @@ const UserProfile = ({ profile }) => {
         return 'https://via.placeholder.com/150';
     };
 
+    const plat = profile.trophySummary?.earnedTrophies?.platinum || 0;
+    const gold = profile.trophySummary?.earnedTrophies?.gold || 0;
+    const silver = profile.trophySummary?.earnedTrophies?.silver || 0;
+    const bronze = profile.trophySummary?.earnedTrophies?.bronze || 0;
+    const total = plat + gold + silver + bronze;
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white/5 backdrop-blur-lg border border-white/10 p-6 rounded-2xl shadow-xl w-full max-w-2xl mx-auto mb-8"
+            className="bg-white/5 backdrop-blur-lg border border-white/10 p-6 rounded-2xl shadow-xl w-full max-w-2xl mx-auto mb-1"
         >
             <div className="flex items-start gap-6">
                 {/* Avatar Section */}
@@ -49,28 +89,23 @@ const UserProfile = ({ profile }) => {
                     <div className="grid grid-cols-5 gap-3 mt-4">
                         <div className="flex flex-col items-center border-r border-white/10 pr-3">
                             <span className="text-xs text-gray-500 uppercase tracking-wider">Total</span>
-                            <span className="text-lg font-bold text-white">
-                                {(profile.trophySummary?.earnedTrophies?.platinum || 0) +
-                                    (profile.trophySummary?.earnedTrophies?.gold || 0) +
-                                    (profile.trophySummary?.earnedTrophies?.silver || 0) +
-                                    (profile.trophySummary?.earnedTrophies?.bronze || 0)}
-                            </span>
+                            <SlideNumber value={total} className="text-lg font-bold text-white" />
                         </div>
                         <div className="flex flex-col items-center">
                             <span className="text-xs text-gray-500 uppercase tracking-wider">Platinum</span>
-                            <span className="text-lg font-bold text-blue-400">{profile.trophySummary?.earnedTrophies?.platinum || 0}</span>
+                            <SlideNumber value={plat} className="text-lg font-bold text-blue-400" />
                         </div>
                         <div className="flex flex-col items-center">
                             <span className="text-xs text-gray-500 uppercase tracking-wider">Gold</span>
-                            <span className="text-lg font-bold text-yellow-400">{profile.trophySummary?.earnedTrophies?.gold || 0}</span>
+                            <SlideNumber value={gold} className="text-lg font-bold text-yellow-400" />
                         </div>
                         <div className="flex flex-col items-center">
                             <span className="text-xs text-gray-500 uppercase tracking-wider">Silver</span>
-                            <span className="text-lg font-bold text-gray-300">{profile.trophySummary?.earnedTrophies?.silver || 0}</span>
+                            <SlideNumber value={silver} className="text-lg font-bold text-gray-300" />
                         </div>
                         <div className="flex flex-col items-center">
                             <span className="text-xs text-gray-500 uppercase tracking-wider">Bronze</span>
-                            <span className="text-lg font-bold text-orange-400">{profile.trophySummary?.earnedTrophies?.bronze || 0}</span>
+                            <SlideNumber value={bronze} className="text-lg font-bold text-orange-400" />
                         </div>
                     </div>
                 </div>

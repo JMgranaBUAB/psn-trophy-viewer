@@ -208,6 +208,29 @@ const GameTrophies = () => {
                                                 </div>
                                             );
                                         })}
+
+                                        {(() => {
+                                            const totalTrophies = trophies.length;
+                                            const totalEarned = trophies.filter(t => t.earned).length;
+                                            const totalPending = totalTrophies - totalEarned;
+
+                                            if (totalTrophies === 0 || trophies.every(t => t.earned)) return null;
+
+                                            return (
+                                                <>
+                                                    <div className="hidden sm:block w-px bg-white/10 self-stretch my-2"></div>
+                                                    <div className="flex flex-col">
+                                                        <div className="text-2xl font-bold text-white">
+                                                            {totalEarned}/{totalTrophies}
+                                                        </div>
+                                                        <div className="text-xs text-purple-400 uppercase mt-1 font-semibold">TOTAL</div>
+                                                        <div className="text-xs text-gray-400 mt-1">
+                                                            {totalPending} restante{totalPending > 1 ? 's' : ''}
+                                                        </div>
+                                                    </div>
+                                                </>
+                                            );
+                                        })()}
                                     </div>
 
                                     {/* Total Points Summary */}
