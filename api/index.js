@@ -312,6 +312,92 @@ router.get('/titles/:npCommunicationId/trophies', async (req, res) => {
     }
 });
 
+router.get('/trophies/rarest', async (req, res) => {
+    console.log("[API] GET /api/trophies/rarest");
+    const accessToken = await authenticate(req.npsso);
+    if (!accessToken) return res.status(401).json({ error: 'Sesión expirada.' });
+
+    const accountId = getAccountIdFromToken(accessToken);
+    if (!accountId) return res.status(500).json({ error: 'ID de cuenta no encontrado.' });
+
+    try {
+        // 1. Fetch all titles
+        const PAGE_SIZE = 800;
+        let offset = 0;
+        let allTitles = [];
+        let totalCount = null;
+
+        do {
+            const page = await getUserTitles({ accessToken }, accountId, { limit: PAGE_SIZE, offset });
+            if (totalCount === null) totalCount = page.totalItemCount || 0;
+            const batch = page.trophyTitles || [];
+            allTitles = allTitles.concat(batch);
+            offset += batch.length;
+            if (batch.length === 0 || allTitles.length >= totalCount) break;
+        } while (true);
+
+        // 2. For each title, fetch earned trophies with rarity (in batches of 5)
+        let allEarnedTrophies = [];
+        const BATCH_SIZE = 5;
+
+        for (let i = 0; i < allTitles.length; i += BATCH_SIZE) {
+            const batch = allTitles.slice(i, i + BATCH_SIZE);
+            const results = await Promise.allSettled(batch.map(async (title) => {
+                const serviceName = title.npServiceName || (title.trophyTitlePlatform?.includes('PS5') ? 'trophy2' : 'trophy');
+                const [staticRes, userRes] = await Promise.all([
+                    getTitleTrophies({ accessToken }, title.npCommunicationId, 'all', { npServiceName: serviceName }),
+                    getUserTrophiesEarnedForTitle({ accessToken }, accountId, title.npCommunicationId, 'all', { limit: 300, npServiceName: serviceName })
+                ]);
+
+                const staticTrophies = staticRes.trophies || [];
+                const userTrophies = userRes.trophies || [];
+
+                return userTrophies
+                    .filter(ut => ut.earned)
+                    .map(ut => {
+                        const st = staticTrophies.find(s => s.trophyId === ut.trophyId) || {};
+                        return {
+                            trophyName: st.trophyName || ut.trophyName || 'Unknown',
+                            trophyType: st.trophyType || ut.trophyType || 'bronze',
+                            trophyIconUrl: st.trophyIconUrl || null,
+                            trophyEarnedRate: ut.trophyEarnedRate || st.trophyEarnedRate || '100.0',
+                            earnedDateTime: ut.earnedDateTime,
+                            gameName: title.trophyTitleName,
+                            gameIconUrl: title.trophyTitleIconUrl,
+                            npCommunicationId: title.npCommunicationId,
+                            platform: title.trophyTitlePlatform || '',
+                        };
+                    });
+            }));
+
+            results.forEach(r => {
+                if (r.status === 'fulfilled' && r.value) {
+                    allEarnedTrophies = allEarnedTrophies.concat(r.value);
+                }
+            });
+        }
+
+        // 3. Sort: lowest % first, ties by oldest earned date first
+        const sortFn = (a, b) => {
+            const rateA = parseFloat(a.trophyEarnedRate);
+            const rateB = parseFloat(b.trophyEarnedRate);
+            if (rateA !== rateB) return rateA - rateB;
+            return new Date(a.earnedDateTime) - new Date(b.earnedDateTime);
+        };
+
+        const rarestAll = [...allEarnedTrophies].sort(sortFn).slice(0, 20);
+        const rarestPlatinums = allEarnedTrophies
+            .filter(t => t.trophyType === 'platinum')
+            .sort(sortFn)
+            .slice(0, 20);
+
+        res.json({ rarestAll, rarestPlatinums, totalProcessed: allTitles.length });
+    } catch (error) {
+        console.error("[RAREST ERROR]", error.message);
+        res.status(500).json({ error: "Error de Sony: " + error.message });
+    }
+});
+
 // Map router to both /api and root
 app.use('/api', router);
 app.use('/', router);

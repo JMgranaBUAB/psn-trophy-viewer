@@ -2,8 +2,27 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import UserProfile from '../components/UserProfile';
+import trophySound from '../assets/sound/gold, silver, bronze.mp3';
+import platinumSound from '../assets/sound/platinum.mp3';
 
 const REFRESH_INTERVAL = 300; // seconds (5 min)
+
+// Plays the corresponding trophy sound effect
+const playTrophyChime = (type = 'trophy') => {
+    try {
+        const sound = type === 'platinum' ? platinumSound : trophySound;
+        const audio = new Audio(sound);
+        audio.play();
+    } catch (e) {
+        console.warn('[WIDGET] Could not play sound:', e.message);
+    }
+};
+
+const getTotalCount = (p) => {
+    if (!p?.trophySummary?.earnedTrophies) return 0;
+    const e = p.trophySummary.earnedTrophies;
+    return (e.platinum || 0) + (e.gold || 0) + (e.silver || 0) + (e.bronze || 0);
+};
 
 const ProfileWidget = () => {
     const [profile, setProfile] = useState(null);
@@ -11,6 +30,7 @@ const ProfileWidget = () => {
     const [error, setError] = useState(null);
     const [secondsSince, setSecondsSince] = useState(0);
     const lastRefreshRef = useRef(Date.now());
+    const prevProfileRef = useRef(null);
 
     const fetchProfile = async () => {
         try {
@@ -24,7 +44,24 @@ const ProfileWidget = () => {
                 timeout: 20000
             });
 
-            setProfile(response.data);
+            const newProfile = response.data;
+            const prev = prevProfileRef.current;
+
+            // Compare trophy counts and play chime if something changed
+            if (prev !== null) {
+                const prevTotal = getTotalCount(prev);
+                const newTotal = getTotalCount(newProfile);
+                const prevPlat = prev.trophySummary?.earnedTrophies?.platinum || 0;
+                const newPlat = newProfile.trophySummary?.earnedTrophies?.platinum || 0;
+
+                if (newTotal > prevTotal) {
+                    // Platinum is the most special
+                    playTrophyChime(newPlat > prevPlat ? 'platinum' : 'trophy');
+                }
+            }
+
+            prevProfileRef.current = newProfile;
+            setProfile(newProfile);
             setError(null);
         } catch (err) {
             console.error("Error fetching PSN profile for widget:", err);
