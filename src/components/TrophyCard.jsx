@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Trophy } from 'lucide-react';
+import { Trophy, EyeOff } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 // Parse ISO 8601 duration (PT228H56M33S) → "228h 56min" or "45min"
@@ -16,7 +16,7 @@ const parsePlayDuration = (duration) => {
     return `${hours}h ${minutes}min`;
 };
 
-const TrophyCard = ({ title }) => {
+const TrophyCard = ({ title, onHide }) => {
     // Check if platinum trophy is earned
     const hasPlatinum = title.earnedTrophies?.platinum > 0;
     const is100 = title.progress === 100;
@@ -46,7 +46,7 @@ const TrophyCard = ({ title }) => {
                 animate={{ opacity: 1, scale: 1 }}
                 whileHover={{ scale: 1.03, y: -5 }}
                 transition={{ duration: 0.2 }}
-                className="bg-white/5 backdrop-blur-sm rounded-xl overflow-hidden cursor-pointer transition-all duration-300"
+                className="group bg-white/5 backdrop-blur-sm rounded-xl overflow-hidden cursor-pointer transition-all duration-300"
                 style={isSpecial ? {
                     border: `2px solid ${neonColor.ring}`,
                     boxShadow: neonColor.glow,
@@ -62,8 +62,19 @@ const TrophyCard = ({ title }) => {
                         className="w-full h-full object-cover"
                     />
                     {/* Platform Badge */}
-                    <div className={`absolute top-2 right-2 ${platformInfo.color} text-white text-xs font-bold px-2 py-1 rounded`}>
-                        {platformInfo.text}
+                    <div className={`absolute top-2 right-2 flex items-center gap-1.5`}>
+                        {onHide && (
+                            <button
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onHide(title.npCommunicationId); }}
+                                className="bg-black/60 hover:bg-red-500/80 text-white/70 hover:text-white p-1.5 rounded transition-all opacity-0 group-hover:opacity-100"
+                                title="Ocultar juego"
+                            >
+                                <EyeOff size={13} />
+                            </button>
+                        )}
+                        <div className={`${platformInfo.color} text-white text-xs font-bold px-2 py-1 rounded`}>
+                            {platformInfo.text}
+                        </div>
                     </div>
                     {/* Platinum Badge */}
                     {hasPlatinum && (

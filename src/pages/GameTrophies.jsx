@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
-import { motion } from 'framer-motion';
-import { ArrowLeft, Trophy, Lock, Unlock, Loader2, RefreshCw } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, Trophy, Lock, Unlock, Loader2, RefreshCw, BookOpen, X, ExternalLink } from 'lucide-react';
 
 const GameTrophies = () => {
     const { npCommunicationId } = useParams();
@@ -14,6 +14,59 @@ const GameTrophies = () => {
     const [loading, setLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [error, setError] = useState(null);
+    const [guidePopup, setGuidePopup] = useState(null); // trophy object or null
+
+    // Build search URLs for trophy guide sites
+    const buildGuideLinks = useCallback((trophy, gameName) => {
+        const tName = encodeURIComponent(trophy.trophyName || '');
+        const gName = encodeURIComponent(gameName || '');
+        const searchQuery = encodeURIComponent(`${gameName} ${trophy.trophyName} trophy guide`);
+        return [
+            {
+                name: 'PSNProfiles',
+                url: `https://psnprofiles.com/search/games?q=${gName}`,
+                color: 'from-blue-600 to-blue-800',
+                icon: '🏆',
+            },
+            {
+                name: 'PSTHC',
+                url: `https://psthc.fr/search?q=${gName}`,
+                color: 'from-indigo-600 to-indigo-800',
+                icon: '🎮',
+            },
+            {
+                name: 'PlayStationTrophies.org',
+                url: `https://www.playstationtrophies.org/search.php?do=process&query=${gName}`,
+                color: 'from-purple-600 to-purple-800',
+                icon: '🎯',
+            },
+            {
+                name: 'PowerPyx',
+                url: `https://www.powerpyx.com/?s=${gName}`,
+                color: 'from-red-600 to-red-800',
+                icon: '⚡',
+            },
+            {
+                name: 'YouTube',
+                url: `https://www.youtube.com/results?search_query=${searchQuery}`,
+                color: 'from-red-500 to-red-700',
+                icon: '▶️',
+            },
+            {
+                name: 'Google',
+                url: `https://www.google.com/search?q=${searchQuery}`,
+                color: 'from-emerald-600 to-emerald-800',
+                icon: '🔍',
+            },
+        ];
+    }, []);
+
+    // Close popup on Escape key
+    useEffect(() => {
+        const handleEsc = (e) => { if (e.key === 'Escape') setGuidePopup(null); };
+        window.addEventListener('keydown', handleEsc);
+        return () => window.removeEventListener('keydown', handleEsc);
+    }, []);
 
 
     const fetchTrophies = async (isManualRefresh = false) => {
@@ -280,6 +333,17 @@ const GameTrophies = () => {
                                                         <Unlock size={12} className="text-black" />
                                                     </div>
                                                 )}
+                                                {/* Guide button */}
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setGuidePopup(trophy);
+                                                    }}
+                                                    className="absolute -top-2 -left-2 bg-amber-500 hover:bg-amber-400 rounded-full p-1 border-2 border-[#0f0f15] transition-all hover:scale-110 shadow-lg shadow-amber-500/30 z-10"
+                                                    title="Ver guía del trofeo"
+                                                >
+                                                    <BookOpen size={12} className="text-black" />
+                                                </button>
                                             </div>
 
                                             <div className="flex-1">
@@ -339,6 +403,93 @@ const GameTrophies = () => {
                     <RefreshCw size={24} className={`text-white ${isRefreshing ? 'animate-spin' : ''}`} />
                 </button>
             </div>
+
+            {/* Trophy Guide Modal */}
+            <AnimatePresence>
+                {guidePopup && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[100] p-4"
+                        onClick={() => setGuidePopup(null)}
+                    >
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                            className="bg-[#1a1a2e] border border-white/10 rounded-2xl shadow-2xl shadow-purple-500/10 max-w-lg w-full max-h-[90vh] overflow-y-auto"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Modal Header */}
+                            <div className="p-6 border-b border-white/10">
+                                <div className="flex items-start justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <img
+                                            src={guidePopup.trophyIconUrl}
+                                            alt={guidePopup.trophyName}
+                                            className="w-14 h-14 rounded-lg object-cover"
+                                        />
+                                        <div>
+                                            <h3 className="text-lg font-bold text-white leading-tight">
+                                                {guidePopup.trophyName}
+                                            </h3>
+                                            {guidePopup.trophyNameEs && guidePopup.trophyNameEs !== guidePopup.trophyName && (
+                                                <p className="text-sm text-blue-300 italic">{guidePopup.trophyNameEs}</p>
+                                            )}
+                                            <span className={`inline-block mt-1 text-[10px] px-2 py-0.5 rounded font-mono uppercase tracking-wider
+                                                ${guidePopup.trophyType === 'platinum' ? 'bg-blue-500/20 text-blue-300' :
+                                                    guidePopup.trophyType === 'gold' ? 'bg-yellow-500/20 text-yellow-300' :
+                                                        guidePopup.trophyType === 'silver' ? 'bg-gray-400/20 text-gray-300' :
+                                                            'bg-orange-500/20 text-orange-300'
+                                                }`}>
+                                                {guidePopup.trophyType}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setGuidePopup(null)}
+                                        className="text-gray-400 hover:text-white transition-colors p-1 hover:bg-white/10 rounded-lg"
+                                    >
+                                        <X size={20} />
+                                    </button>
+                                </div>
+                                <p className="text-gray-400 text-sm mt-3">{guidePopup.trophyDetail}</p>
+                                {guidePopup.trophyDetailEs && (
+                                    <p className="text-blue-300/70 text-sm mt-1 italic">{guidePopup.trophyDetailEs}</p>
+                                )}
+                            </div>
+
+                            {/* Guide Links */}
+                            <div className="p-6">
+                                <h4 className="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                    <BookOpen size={14} className="text-amber-400" />
+                                    Buscar guía en:
+                                </h4>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {buildGuideLinks(guidePopup, titleName).map((link) => (
+                                        <a
+                                            key={link.name}
+                                            href={link.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className={`flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r ${link.color} hover:brightness-125 transition-all hover:scale-[1.02] shadow-lg group`}
+                                        >
+                                            <span className="text-lg">{link.icon}</span>
+                                            <span className="text-sm font-semibold text-white truncate">{link.name}</span>
+                                            <ExternalLink size={12} className="text-white/50 group-hover:text-white/80 ml-auto shrink-0" />
+                                        </a>
+                                    ))}
+                                </div>
+                                <p className="text-[11px] text-gray-500 mt-4 text-center">
+                                    Los enlaces abren una búsqueda del juego en cada web de guías.
+                                </p>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

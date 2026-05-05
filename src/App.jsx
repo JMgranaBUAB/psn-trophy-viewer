@@ -1,14 +1,18 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { Gamepad2, Loader2, AlertCircle, LogOut, Trophy, RefreshCw, Clock, Diamond } from 'lucide-react';
+import { Gamepad2, Loader2, AlertCircle, LogOut, Trophy, RefreshCw, Clock, Diamond, Target, Filter } from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
 import UserProfile from './components/UserProfile';
 import TrophyList from './components/TrophyList';
 import GameTrophies from './pages/GameTrophies';
 import TopGames from './pages/TopGames';
 import RarestTrophies from './pages/RarestTrophies';
+import EasyTrophies from './pages/EasyTrophies';
 import Login from './pages/Login';
 import ProfileWidget from './pages/ProfileWidget';
+import useHiddenGames from './hooks/useHiddenGames';
+import GameFilterPanel from './components/GameFilterPanel';
 
 // Configure global axios defaults for consistency
 axios.defaults.timeout = 10000; // 10 seconds global timeout
@@ -19,7 +23,9 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(null);
+  const [filterOpen, setFilterOpen] = useState(false);
   const navigate = useNavigate();
+  const { hiddenGames, hiddenCount, toggleGame, isHidden, exportHiddenGames, importHiddenGames } = useHiddenGames();
 
   const handleLogout = async () => {
     try {
@@ -90,6 +96,13 @@ function Dashboard() {
           </div>
           <div className="flex items-center gap-3">
             <Link
+              to="/easy"
+              className="flex items-center gap-2 text-gray-300 hover:text-green-400 transition-colors px-3 py-1 bg-white/5 hover:bg-green-500/10 rounded-lg border border-white/5 hover:border-green-500/20 text-sm font-medium"
+            >
+              <Target size={15} />
+              Fáciles
+            </Link>
+            <Link
               to="/rarest"
               className="flex items-center gap-2 text-gray-300 hover:text-red-400 transition-colors px-3 py-1 bg-white/5 hover:bg-red-500/10 rounded-lg border border-white/5 hover:border-red-500/20 text-sm font-medium"
             >
@@ -103,6 +116,18 @@ function Dashboard() {
               <Clock size={15} />
               Top 20
             </Link>
+            <button
+              onClick={() => setFilterOpen(true)}
+              className="relative flex items-center gap-2 text-gray-300 hover:text-purple-400 transition-colors px-3 py-1 bg-white/5 hover:bg-purple-500/10 rounded-lg border border-white/5 hover:border-purple-500/20 text-sm font-medium"
+            >
+              <Filter size={15} />
+              Filtrar
+              {hiddenCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                  {hiddenCount}
+                </span>
+              )}
+            </button>
             <button
               onClick={handleLogout}
               className="flex items-center gap-2 text-gray-400 hover:text-red-400 transition-colors px-3 py-1 bg-white/5 hover:bg-red-500/10 rounded-lg border border-white/5 hover:border-red-500/20"
@@ -155,11 +180,28 @@ function Dashboard() {
                 <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
                   <Trophy size={20} className="text-yellow-500" />
                   Juegos Recientes
+                  ({titles.filter(t => !hiddenGames.has(t.npCommunicationId)).length})
                 </h3>
-                <TrophyList titles={titles} />
+                <TrophyList titles={titles} hiddenGames={hiddenGames} onHide={toggleGame} />
               </div>
             </div>
           )}
+
+        {/* Game Filter Panel */}
+        <AnimatePresence>
+          {filterOpen && (
+            <GameFilterPanel
+              titles={titles}
+              hiddenGames={hiddenGames}
+              toggleGame={toggleGame}
+              isHidden={isHidden}
+              exportHiddenGames={exportHiddenGames}
+              importHiddenGames={importHiddenGames}
+              hiddenCount={hiddenCount}
+              onClose={() => setFilterOpen(false)}
+            />
+          )}
+        </AnimatePresence>
         </main>
 
         {/* Floating Refresh Button */}
@@ -271,6 +313,7 @@ function App() {
         <Route path="/game/:npCommunicationId" element={isAuth ? <GameTrophies /> : <Login onLoginSuccess={() => setIsAuth(true)} />} />
         <Route path="/top" element={isAuth ? <TopGames /> : <Login onLoginSuccess={() => setIsAuth(true)} />} />
         <Route path="/rarest" element={isAuth ? <RarestTrophies /> : <Login onLoginSuccess={() => setIsAuth(true)} />} />
+        <Route path="/easy" element={isAuth ? <EasyTrophies /> : <Login onLoginSuccess={() => setIsAuth(true)} />} />
         <Route path="/widget" element={isAuth ? <ProfileWidget /> : <Login onLoginSuccess={() => setIsAuth(true)} />} />
       </Routes>
     </Router>

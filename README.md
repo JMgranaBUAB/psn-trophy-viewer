@@ -25,7 +25,7 @@ A modern, high-performance React application for viewing your PlayStation Networ
 - **Total Points System**: Calculates and displays the earned vs. total PSN points per DLC/Game (Platinum=300, Gold=90, Silver=30, Bronze=15).
 - **Spanish Translation**: Automatic machine translation for all trophy titles and descriptions, displayed elegantly inline.
 - **Auto-Sorting**: Trophies are automatically sorted by rarity (rarest first) for a better overview.
-
+- **Trophy Guide Lookup**: Click the book icon on any trophy to instantly search for solutions across top guide sites (PSNProfiles, PSTHC, PowerPyx, PlayStationTrophies.org, YouTube, and Google).
 ### 🎯 Pro Dashboard & UI
 - **Live Profile Widget**: A standalone, auto-refreshing profile card route (`/widget`) designed specifically for OBS overlays, secondary monitors, or streaming setups (refreshes every 5 minutes).
 - **Neon Highlights**: Games with a Platinum trophy glow with a triple-layered cyan/blue neon effect. Games with 100% completion (but no platinum) glow with a premium gold aesthetic.

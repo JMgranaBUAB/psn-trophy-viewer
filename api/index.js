@@ -398,6 +398,89 @@ router.get('/trophies/rarest', async (req, res) => {
     }
 });
 
+router.get('/trophies/easy-missing', async (req, res) => {
+    console.log("[API] GET /api/trophies/easy-missing");
+    const accessToken = await authenticate(req.npsso);
+    if (!accessToken) return res.status(401).json({ error: 'Sesión expirada.' });
+
+    const accountId = getAccountIdFromToken(accessToken);
+    if (!accountId) return res.status(500).json({ error: 'ID de cuenta no encontrado.' });
+
+    try {
+        // 1. Fetch all titles
+        const PAGE_SIZE = 800;
+        let offset = 0;
+        let allTitles = [];
+        let totalCount = null;
+
+        do {
+            const page = await getUserTitles({ accessToken }, accountId, { limit: PAGE_SIZE, offset });
+            if (totalCount === null) totalCount = page.totalItemCount || 0;
+            const batch = page.trophyTitles || [];
+            allTitles = allTitles.concat(batch);
+            offset += batch.length;
+            if (batch.length === 0 || allTitles.length >= totalCount) break;
+        } while (true);
+
+        // 2. For each title, fetch trophies and find unearned ones with rate >= 80%
+        let easyMissing = [];
+        const BATCH_SIZE = 5;
+
+        for (let i = 0; i < allTitles.length; i += BATCH_SIZE) {
+            const batch = allTitles.slice(i, i + BATCH_SIZE);
+            const results = await Promise.allSettled(batch.map(async (title) => {
+                const serviceName = title.npServiceName || (title.trophyTitlePlatform?.includes('PS5') ? 'trophy2' : 'trophy');
+                const [staticRes, userRes] = await Promise.all([
+                    getTitleTrophies({ accessToken }, title.npCommunicationId, 'all', { npServiceName: serviceName }),
+                    getUserTrophiesEarnedForTitle({ accessToken }, accountId, title.npCommunicationId, 'all', { limit: 300, npServiceName: serviceName })
+                ]);
+
+                const staticTrophies = staticRes.trophies || [];
+                const userTrophies = userRes.trophies || [];
+
+                return staticTrophies
+                    .map(st => {
+                        const ut = userTrophies.find(u => u.trophyId === st.trophyId);
+                        const earned = ut ? ut.earned : false;
+                        const rate = parseFloat(ut?.trophyEarnedRate || st.trophyEarnedRate || '0');
+                        return { st, earned, rate };
+                    })
+                    .filter(({ earned, rate }) => !earned && rate >= 80)
+                    .map(({ st, rate }) => ({
+                        trophyName: st.trophyName || 'Unknown',
+                        trophyDetail: st.trophyDetail || '',
+                        trophyType: st.trophyType || 'bronze',
+                        trophyIconUrl: st.trophyIconUrl || null,
+                        trophyEarnedRate: rate.toString(),
+                        gameName: title.trophyTitleName,
+                        gameIconUrl: title.trophyTitleIconUrl,
+                        npCommunicationId: title.npCommunicationId,
+                        platform: title.trophyTitlePlatform || '',
+                    }));
+            }));
+
+            results.forEach(r => {
+                if (r.status === 'fulfilled' && r.value) {
+                    easyMissing = easyMissing.concat(r.value);
+                }
+            });
+        }
+
+        // 3. Sort: highest rate first, ties alphabetically by game name
+        easyMissing.sort((a, b) => {
+            const rateA = parseFloat(a.trophyEarnedRate);
+            const rateB = parseFloat(b.trophyEarnedRate);
+            if (rateA !== rateB) return rateB - rateA;
+            return a.gameName.localeCompare(b.gameName);
+        });
+
+        res.json({ trophies: easyMissing, totalProcessed: allTitles.length });
+    } catch (error) {
+        console.error("[EASY-MISSING ERROR]", error.message);
+        res.status(500).json({ error: "Error de Sony: " + error.message });
+    }
+});
+
 // Map router to both /api and root
 app.use('/api', router);
 app.use('/', router);
