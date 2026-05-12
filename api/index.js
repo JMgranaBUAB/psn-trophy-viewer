@@ -481,6 +481,146 @@ router.get('/trophies/easy-missing', async (req, res) => {
     }
 });
 
+router.get('/trophies/easiest', async (req, res) => {
+    console.log("[API] GET /api/trophies/easiest");
+    const accessToken = await authenticate(req.npsso);
+    if (!accessToken) return res.status(401).json({ error: 'Sesión expirada.' });
+
+    const accountId = getAccountIdFromToken(accessToken);
+    if (!accountId) return res.status(500).json({ error: 'ID de cuenta no encontrado.' });
+
+    try {
+        // Parse excluded (hidden) game IDs
+        const excludeParam = req.query.exclude || '';
+        const excludedIds = new Set(excludeParam ? excludeParam.split(',').map(s => s.trim()).filter(Boolean) : []);
+
+        // 1. Fetch all titles
+        const PAGE_SIZE = 800;
+        let offset = 0;
+        let allTitles = [];
+        let totalCount = null;
+
+        do {
+            const page = await getUserTitles({ accessToken }, accountId, { limit: PAGE_SIZE, offset });
+            if (totalCount === null) totalCount = page.totalItemCount || 0;
+            const batch = page.trophyTitles || [];
+            allTitles = allTitles.concat(batch);
+            offset += batch.length;
+            if (batch.length === 0 || allTitles.length >= totalCount) break;
+        } while (true);
+
+        // Filter out hidden games
+        const visibleTitles = allTitles.filter(t => !excludedIds.has(t.npCommunicationId));
+
+        // 2. For each visible title, fetch trophies (in batches of 5)
+        let allUnearnedTrophies = [];
+        let closestToPlat = [];
+        const BATCH_SIZE = 5;
+
+        for (let i = 0; i < visibleTitles.length; i += BATCH_SIZE) {
+            const batch = visibleTitles.slice(i, i + BATCH_SIZE);
+            const results = await Promise.allSettled(batch.map(async (title) => {
+                const serviceName = title.npServiceName || (title.trophyTitlePlatform?.includes('PS5') ? 'trophy2' : 'trophy');
+                const [staticRes, userRes] = await Promise.all([
+                    getTitleTrophies({ accessToken }, title.npCommunicationId, 'all', { npServiceName: serviceName }),
+                    getUserTrophiesEarnedForTitle({ accessToken }, accountId, title.npCommunicationId, 'all', { limit: 300, npServiceName: serviceName })
+                ]);
+
+                const staticTrophies = staticRes.trophies || [];
+                const userTrophies = userRes.trophies || [];
+
+                // Collect UNEARNED trophies (pending)
+                const unearned = staticTrophies
+                    .filter(st => {
+                        const ut = userTrophies.find(u => u.trophyId === st.trophyId);
+                        return !ut || !ut.earned;
+                    })
+                    .map(st => {
+                        const ut = userTrophies.find(u => u.trophyId === st.trophyId);
+                        return {
+                            trophyName: st.trophyName || 'Unknown',
+                            trophyDetail: st.trophyDetail || '',
+                            trophyType: st.trophyType || 'bronze',
+                            trophyIconUrl: st.trophyIconUrl || null,
+                            trophyEarnedRate: ut?.trophyEarnedRate || st.trophyEarnedRate || '0.0',
+                            gameName: title.trophyTitleName,
+                            gameIconUrl: title.trophyTitleIconUrl,
+                            npCommunicationId: title.npCommunicationId,
+                            platform: title.trophyTitlePlatform || '',
+                        };
+                    });
+
+                // Check if game has a platinum and if it's NOT yet earned
+                const hasPlatinum = staticTrophies.some(s => s.trophyType === 'platinum');
+                const platinumEarned = userTrophies.some(ut => ut.earned && (staticTrophies.find(s => s.trophyId === ut.trophyId)?.trophyType === 'platinum'));
+
+                let platInfo = null;
+                if (hasPlatinum && !platinumEarned) {
+                    // Count missing trophies in base group (trophyGroupId === 'default')
+                    const baseTrophies = staticTrophies.filter(s => s.trophyGroupId === 'default');
+                    const totalBase = baseTrophies.length;
+                    const earnedBase = baseTrophies.filter(s => {
+                        const ut = userTrophies.find(u => u.trophyId === s.trophyId);
+                        return ut && ut.earned;
+                    }).length;
+                    const missing = totalBase - earnedBase;
+
+                    platInfo = {
+                        gameName: title.trophyTitleName,
+                        gameIconUrl: title.trophyTitleIconUrl,
+                        npCommunicationId: title.npCommunicationId,
+                        platform: title.trophyTitlePlatform || '',
+                        totalTrophies: totalBase,
+                        earnedTrophies: earnedBase,
+                        missingTrophies: missing,
+                        progress: totalBase > 0 ? Math.round((earnedBase / totalBase) * 100) : 0,
+                    };
+                }
+
+                return { unearned, platInfo };
+            }));
+
+            results.forEach(r => {
+                if (r.status === 'fulfilled' && r.value) {
+                    allUnearnedTrophies = allUnearnedTrophies.concat(r.value.unearned);
+                    if (r.value.platInfo) closestToPlat.push(r.value.platInfo);
+                }
+            });
+        }
+
+        // 3. Sort: highest earn rate first (easiest to obtain)
+        const sortEasiest = (a, b) => {
+            const rateA = parseFloat(a.trophyEarnedRate);
+            const rateB = parseFloat(b.trophyEarnedRate);
+            if (rateA !== rateB) return rateB - rateA;
+            return a.gameName.localeCompare(b.gameName);
+        };
+
+        const easiestAll = [...allUnearnedTrophies].sort(sortEasiest).slice(0, 20);
+        const easiestPlatinums = allUnearnedTrophies
+            .filter(t => t.trophyType === 'platinum')
+            .sort(sortEasiest)
+            .slice(0, 20);
+
+        // 4. Sort closest to plat: fewest missing first, ties by highest progress %
+        closestToPlat.sort((a, b) => {
+            if (a.missingTrophies !== b.missingTrophies) return a.missingTrophies - b.missingTrophies;
+            return b.progress - a.progress;
+        });
+        const top20ClosestToPlat = closestToPlat.slice(0, 20);
+
+        res.json({
+            easiestAll,
+            easiestPlatinums,
+            closestToPlat: top20ClosestToPlat,
+            totalProcessed: visibleTitles.length,
+        });
+    } catch (error) {
+        console.error("[EASIEST ERROR]", error.message);
+        res.status(500).json({ error: "Error de Sony: " + error.message });
+    }
+});
+
 // Map router to both /api and root
 app.use('/api', router);
 app.use('/', router);

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { Gamepad2, Loader2, AlertCircle, LogOut, Trophy, RefreshCw, Clock, Diamond, Target, Filter } from 'lucide-react';
+import { Gamepad2, Loader2, AlertCircle, LogOut, Trophy, RefreshCw, Clock, Diamond, Target, Filter, Sparkles } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import UserProfile from './components/UserProfile';
 import TrophyList from './components/TrophyList';
@@ -9,6 +9,7 @@ import GameTrophies from './pages/GameTrophies';
 import TopGames from './pages/TopGames';
 import RarestTrophies from './pages/RarestTrophies';
 import EasyTrophies from './pages/EasyTrophies';
+import EasiestTrophies from './pages/EasiestTrophies';
 import Login from './pages/Login';
 import ProfileWidget from './pages/ProfileWidget';
 import useHiddenGames from './hooks/useHiddenGames';
@@ -101,6 +102,13 @@ function Dashboard() {
             >
               <Target size={15} />
               Fáciles
+            </Link>
+            <Link
+              to="/easiest"
+              className="flex items-center gap-2 text-gray-300 hover:text-emerald-400 transition-colors px-3 py-1 bg-white/5 hover:bg-emerald-500/10 rounded-lg border border-white/5 hover:border-emerald-500/20 text-sm font-medium"
+            >
+              <Sparkles size={15} />
+              Top Fáciles
             </Link>
             <Link
               to="/rarest"
@@ -314,6 +322,7 @@ function App() {
         <Route path="/top" element={isAuth ? <TopGames /> : <Login onLoginSuccess={() => setIsAuth(true)} />} />
         <Route path="/rarest" element={isAuth ? <RarestTrophies /> : <Login onLoginSuccess={() => setIsAuth(true)} />} />
         <Route path="/easy" element={isAuth ? <EasyTrophies /> : <Login onLoginSuccess={() => setIsAuth(true)} />} />
+        <Route path="/easiest" element={isAuth ? <EasiestTrophies /> : <Login onLoginSuccess={() => setIsAuth(true)} />} />
         <Route path="/widget" element={isAuth ? <ProfileWidget /> : <Login onLoginSuccess={() => setIsAuth(true)} />} />
       </Routes>
     </Router>

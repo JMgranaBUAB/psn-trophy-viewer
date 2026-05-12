@@ -12,6 +12,7 @@ const playTrophyChime = (type = 'trophy') => {
     try {
         const sound = type === 'platinum' ? platinumSound : trophySound;
         const audio = new Audio(sound);
+        audio.volume = 0.5; // Reduce volume by half
         audio.play();
     } catch (e) {
         console.warn('[WIDGET] Could not play sound:', e.message);
