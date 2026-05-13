@@ -222,8 +222,9 @@ router.get('/titles/:npCommunicationId/trophies', async (req, res) => {
     if (!accountId) return res.status(500).json({ error: 'ID de cuenta no encontrado.' });
 
     try {
-        const titlesResponse = await getUserTitles({ accessToken }, accountId);
+        const titlesResponse = await getUserTitles({ accessToken }, accountId, { limit: 800 });
         const titleInfo = titlesResponse.trophyTitles.find(t => t.npCommunicationId === npCommunicationId);
+        if (!titleInfo) console.warn(`[API] Title not found in first 800 games for ${npCommunicationId}`);
         const titleName = titleInfo ? titleInfo.trophyTitleName : 'Juego';
         const serviceName = titleInfo?.npServiceName || (titleInfo?.trophyTitlePlatform?.includes('PS5') ? 'trophy2' : 'trophy');
 
