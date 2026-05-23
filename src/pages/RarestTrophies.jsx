@@ -157,7 +157,7 @@ const RarestTrophies = () => {
                 <div className="absolute top-[40%] left-[60%] w-[25%] h-[25%] bg-red-900/10 rounded-full blur-[100px]" />
             </div>
 
-            <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 py-10">
+            <div className="relative z-10 max-w-[1400px] mx-auto px-4 sm:px-6 py-10">
                 {/* Header */}
                 <div className="flex items-center gap-4 mb-10">
                     <Link
@@ -187,9 +187,9 @@ const RarestTrophies = () => {
                 ) : error ? (
                     <div className="text-center text-red-400 py-20">{error}</div>
                 ) : (
-                    <div className="space-y-14">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         {/* Section 1: Top 20 Rarest Trophies */}
-                        <section>
+                        <section className="min-w-0">
                             <div className="flex items-center gap-3 mb-6">
                                 <div className="w-1 h-8 bg-gradient-to-b from-red-500 to-orange-500 rounded-full" />
                                 <div>
@@ -219,11 +219,8 @@ const RarestTrophies = () => {
                             )}
                         </section>
 
-                        {/* Divider */}
-                        <div className="border-t border-white/5" />
-
                         {/* Section 2: Top 20 Rarest Platinums */}
-                        <section>
+                        <section className="min-w-0">
                             <div className="flex items-center gap-3 mb-6">
                                 <div className="w-1 h-8 bg-gradient-to-b from-blue-400 to-cyan-500 rounded-full" />
                                 <div>
