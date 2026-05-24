@@ -149,10 +149,24 @@ router.get('/trophies/me', async (req, res) => {
             if (batch.length === 0 || allTitles.length >= totalCount) break;
         } while (true);
 
+        // Normalize a game name for fuzzy matching: strip ®™©, punctuation, collapse whitespace
+        const normalizeName = (name) => {
+            if (!name) return '';
+            return name
+                .toLowerCase()
+                .replace(/[®™©]/g, '')
+                .replace(/[:.\-–—]/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+        };
+
         // Fetch played games to get playDuration, paginating if needed
-        let playedGamesMap = {};
-        let playedGamesByNamePlatform = {}; // name+platform → duration
-        let playedGamesByName = {};         // name → duration (fallback)
+        let playedGamesMap = {};              // titleId → duration
+        let playedGamesByConceptId = {};      // any concept titleId → duration
+        let playedGamesByNamePlatform = {};   // name+platform → duration
+        let playedGamesByName = {};           // name → duration (fallback)
+        let playedGamesByNormNamePlatform = {}; // normalized name+platform → duration
+        let playedGamesByNormName = {};       // normalized name → duration
         try {
             let pgOffset = 0;
             let pgTotal = null;
@@ -164,18 +178,29 @@ router.get('/trophies/me', async (req, res) => {
                     const duration = g.playDuration || null;
                     if (duration) {
                         playedGamesMap[g.titleId] = duration;
+
+                        // Map all concept titleIds for broader matching
+                        if (g.concept?.titleIds) {
+                            g.concept.titleIds.forEach(id => {
+                                playedGamesByConceptId[id] = duration;
+                            });
+                        }
+
                         // Map by name+platform for PS4/PS5 distinction
                         const cat = g.category || '';
-                        if (g.name) {
-                            const key = g.name.toLowerCase() + '|' + cat;
-                            playedGamesByNamePlatform[key] = duration;
-                            playedGamesByName[g.name.toLowerCase()] = duration;
-                        }
-                        if (g.localizedName) {
-                            const key = g.localizedName.toLowerCase() + '|' + cat;
-                            playedGamesByNamePlatform[key] = duration;
-                            playedGamesByName[g.localizedName.toLowerCase()] = duration;
-                        }
+                        const names = [g.name, g.localizedName, g.concept?.name].filter(Boolean);
+                        const uniqueNames = [...new Set(names)];
+
+                        uniqueNames.forEach(name => {
+                            const lower = name.toLowerCase();
+                            const norm = normalizeName(name);
+                            playedGamesByNamePlatform[lower + '|' + cat] = duration;
+                            playedGamesByName[lower] = duration;
+                            if (norm) {
+                                playedGamesByNormNamePlatform[norm + '|' + cat] = duration;
+                                playedGamesByNormName[norm] = duration;
+                            }
+                        });
                     }
                 });
                 pgOffset += pgBatch.length;
@@ -186,19 +211,23 @@ router.get('/trophies/me', async (req, res) => {
         }
 
         // Merge playDuration into each trophy title
-        // Tiered fallback: titleId → name+platform → name only
+        // 6-tier fallback: titleId → conceptIds → name+platform → name → normName+platform → normName
         allTitles = allTitles.map(t => {
             const plat = t.trophyTitlePlatform || '';
             const cat = plat.includes('PS5') ? 'ps5_native_game'
                       : plat.includes('PS4') ? 'ps4_game'
                       : '';
             const nameLower = t.trophyTitleName?.toLowerCase();
+            const nameNorm = normalizeName(t.trophyTitleName);
             return {
                 ...t,
                 playDuration:
                     playedGamesMap[t.npCommunicationId] ||
+                    playedGamesByConceptId[t.npCommunicationId] ||
                     (nameLower && cat ? playedGamesByNamePlatform[nameLower + '|' + cat] : null) ||
                     (nameLower ? playedGamesByName[nameLower] : null) ||
+                    (nameNorm && cat ? playedGamesByNormNamePlatform[nameNorm + '|' + cat] : null) ||
+                    (nameNorm ? playedGamesByNormName[nameNorm] : null) ||
                     null
             };
         });

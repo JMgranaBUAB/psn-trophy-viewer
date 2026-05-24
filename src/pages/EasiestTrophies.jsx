@@ -76,18 +76,18 @@ const TrophyRow = ({ trophy, index, isPlatinumSection }) => {
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 mb-0.5">
-                            <span className="font-semibold text-xs truncate text-white">{trophy.trophyName}</span>
+                            {trophy.gameIconUrl && (
+                                <img src={trophy.gameIconUrl} alt="" className="w-3.5 h-3.5 rounded-sm flex-shrink-0" />
+                            )}
+                            <span className="font-semibold text-xs truncate text-white">{trophy.gameName}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 mb-1">
+                            <span className="text-[10px] text-gray-400 truncate">{trophy.trophyName}</span>
                             {!isPlatinumSection && (
                                 <span className={`flex-shrink-0 text-[8px] ${typeStyle.bg} ${typeStyle.text} px-1 py-0.5 rounded-full uppercase tracking-wider font-medium`}>
                                     {typeStyle.label}
                                 </span>
                             )}
-                        </div>
-                        <div className="flex items-center gap-1.5 mb-1">
-                            {trophy.gameIconUrl && (
-                                <img src={trophy.gameIconUrl} alt="" className="w-3.5 h-3.5 rounded-sm flex-shrink-0" />
-                            )}
-                            <span className="text-[10px] text-gray-400 truncate">{trophy.gameName}</span>
                         </div>
                         <div className="w-full bg-white/10 rounded-full h-0.5 overflow-hidden">
                             <motion.div
