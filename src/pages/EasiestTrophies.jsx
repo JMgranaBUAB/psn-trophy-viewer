@@ -33,12 +33,21 @@ const getEasinessLabel = (rate) => {
     return { label: 'Difícil', color: 'text-purple-400' };
 };
 
+const getPlatformInfo = (platform) => {
+    if (platform?.includes('PS5')) return { text: 'PS5', color: 'bg-blue-600' };
+    if (platform?.includes('PS4')) return { text: 'PS4', color: 'bg-blue-500' };
+    if (platform?.includes('VITA')) return { text: 'Vita', color: 'bg-purple-500' };
+    if (platform?.includes('PS3')) return { text: 'PS3', color: 'bg-gray-600' };
+    return null;
+};
+
 /* ── Compact Trophy Row (sections 1 & 2) ── */
 const TrophyRow = ({ trophy, index, isPlatinumSection }) => {
     const medal = index < 3 ? medalConfig[index] : null;
     const rate = parseFloat(trophy.trophyEarnedRate);
     const typeStyle = trophyTypeStyles[trophy.trophyType] || trophyTypeStyles.bronze;
     const easiness = getEasinessLabel(rate);
+    const platformInfo = getPlatformInfo(trophy.platform);
 
     return (
         <motion.div
@@ -80,6 +89,11 @@ const TrophyRow = ({ trophy, index, isPlatinumSection }) => {
                                 <img src={trophy.gameIconUrl} alt="" className="w-3.5 h-3.5 rounded-sm flex-shrink-0" />
                             )}
                             <span className="font-semibold text-xs truncate text-white">{trophy.gameName}</span>
+                            {platformInfo && (
+                                <span className={`flex-shrink-0 text-[8px] ${platformInfo.color} text-white px-1 py-0.5 rounded font-bold`}>
+                                    {platformInfo.text}
+                                </span>
+                            )}
                         </div>
                         <div className="flex items-center gap-1.5 mb-1">
                             <span className="text-[10px] text-gray-400 truncate">{trophy.trophyName}</span>
@@ -113,6 +127,7 @@ const TrophyRow = ({ trophy, index, isPlatinumSection }) => {
 /* ── Compact Game Row (closest to platinum – section 3) ── */
 const GamePlatRow = ({ game, index }) => {
     const medal = index < 3 ? medalConfig[index] : null;
+    const platformInfo = getPlatformInfo(game.platform);
 
     return (
         <motion.div
@@ -147,7 +162,14 @@ const GamePlatRow = ({ game, index }) => {
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-xs truncate text-white mb-0.5">{game.gameName}</div>
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                            <span className="font-semibold text-xs truncate text-white">{game.gameName}</span>
+                            {platformInfo && (
+                                <span className={`flex-shrink-0 text-[8px] ${platformInfo.color} text-white px-1 py-0.5 rounded font-bold`}>
+                                    {platformInfo.text}
+                                </span>
+                            )}
+                        </div>
                         <div className="flex items-center gap-1.5 mb-1">
                             <span className="text-[10px] text-gray-400">
                                 {game.earnedTrophies}/{game.totalTrophies}
