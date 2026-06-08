@@ -313,14 +313,33 @@ const GameTrophies = () => {
                                     })()}
                                 </div>
 
-                                <div className="space-y-4">
-                                    {trophies.map((trophy, index) => (
+                                {/* === Trophy List with optional Tracking section === */}
+                                {(() => {
+                                    // Separate trophies with progress tracking (unearned only)
+                                    const trackedTrophies = filter === 'unearned'
+                                        ? trophies.filter(t => !t.earned && t.trophyProgressTargetValue > 1)
+                                        : [];
+                                    const trackedIds = new Set(trackedTrophies.map(t => t.trophyId));
+                                    const remainingTrophies = filter === 'unearned'
+                                        ? trophies.filter(t => !trackedIds.has(t.trophyId))
+                                        : trophies;
+
+                                    const renderTrophy = (trophy, index, isTracked = false) => (
                                         <motion.div
                                             key={trophy.trophyId}
                                             initial={{ opacity: 0, y: 10 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: index * 0.03 }}
-                                            className={`flex items-center p-4 rounded-xl border ${trophy.earned ? 'bg-purple-900/20 border-purple-500/30' : 'bg-white/5 border-white/5'} backdrop-blur-sm hover:bg-white/10 transition-colors`}
+                                            className={`flex items-center p-4 rounded-xl border ${
+                                                trophy.earned
+                                                    ? 'bg-purple-900/20 border-purple-500/30'
+                                                    : isTracked
+                                                        ? trophy.trophyType === 'platinum' ? 'bg-blue-900/20 border-blue-400/30'
+                                                        : trophy.trophyType === 'gold' ? 'bg-amber-400/10 border-amber-400/30'
+                                                        : trophy.trophyType === 'silver' ? 'bg-slate-400/10 border-slate-400/25'
+                                                        : 'bg-orange-700/15 border-orange-600/30'
+                                                    : 'bg-white/5 border-white/5'
+                                            } backdrop-blur-sm hover:bg-white/10 transition-colors`}
                                         >
                                             <div className="flex-shrink-0 mr-4 relative">
                                                 <img
@@ -356,7 +375,7 @@ const GameTrophies = () => {
                                                     </h3>
                                                     <div className="flex items-center shrink-0">
                                                         {trophy.trophyProgressTargetValue > 1 && (
-                                                            <div className="text-lg font-bold mr-4 text-gray-300">
+                                                            <div className={`text-lg font-bold mr-4 ${isTracked ? 'text-yellow-300' : 'text-gray-300'}`}>
                                                                 {trophy.progress || 0}/{trophy.trophyProgressTargetValue}
                                                             </div>
                                                         )}
@@ -373,6 +392,22 @@ const GameTrophies = () => {
                                                         </div>
                                                     </div>
                                                 </div>
+                                                {/* Progress bar for tracked trophies */}
+                                                {isTracked && trophy.trophyProgressTargetValue > 1 && (
+                                                    <div className="mt-1.5 mb-1.5">
+                                                        <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
+                                                            <motion.div
+                                                                initial={{ width: 0 }}
+                                                                animate={{ width: `${Math.min(((trophy.progress || 0) / trophy.trophyProgressTargetValue) * 100, 100)}%` }}
+                                                                transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
+                                                                className="h-full rounded-full bg-gradient-to-r from-yellow-400 to-amber-500"
+                                                            />
+                                                        </div>
+                                                        <div className="text-[10px] text-yellow-500/70 mt-0.5 text-right">
+                                                            {Math.round(((trophy.progress || 0) / trophy.trophyProgressTargetValue) * 100)}% completado
+                                                        </div>
+                                                    </div>
+                                                )}
                                                 <p className="text-gray-400 text-sm">{trophy.trophyDetail}</p>
                                                 {trophy.trophyDetailEs && (
                                                     <p className="text-blue-300 text-sm mt-1 italic">
@@ -386,8 +421,33 @@ const GameTrophies = () => {
                                                 )}
                                             </div>
                                         </motion.div>
-                                    ))}
-                                </div>
+                                    );
+
+                                    return (
+                                        <>
+                                            {/* Tracked trophies section */}
+                                            {trackedTrophies.length > 0 && (
+                                                <div className="mb-6">
+                                                    <div className="flex items-center gap-2.5 mb-3 mt-2">
+                                                        <div className="w-1 h-5 bg-gradient-to-b from-yellow-400 to-amber-500 rounded-full" />
+                                                        <h3 className="text-sm font-bold text-yellow-400 uppercase tracking-wider flex items-center gap-2">
+                                                            📊 Seguimiento ({trackedTrophies.length})
+                                                        </h3>
+                                                        <span className="text-[10px] text-gray-500">Trofeos con progreso</span>
+                                                    </div>
+                                                    <div className="space-y-4">
+                                                        {trackedTrophies.map((trophy, index) => renderTrophy(trophy, index, true))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Remaining trophies */}
+                                            <div className="space-y-4">
+                                                {remainingTrophies.map((trophy, index) => renderTrophy(trophy, index, false))}
+                                            </div>
+                                        </>
+                                    );
+                                })()}
                             </div>
                         );
                     })}
