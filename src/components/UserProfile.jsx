@@ -56,6 +56,7 @@ const UserProfile = ({ profile }) => {
     const silver = profile.trophySummary?.earnedTrophies?.silver || 0;
     const bronze = profile.trophySummary?.earnedTrophies?.bronze || 0;
     const total = plat + gold + silver + bronze;
+    const totalPoints = (plat * 300) + (gold * 90) + (silver * 30) + (bronze * 15);
 
     return (
         <motion.div
@@ -86,7 +87,7 @@ const UserProfile = ({ profile }) => {
                     <p className="text-gray-400 text-sm mt-1 truncate">{profile.aboutMe || 'PlayStation Gamer'}</p>
 
                     {/* Trophy Grid */}
-                    <div className="grid grid-cols-5 gap-3 mt-4">
+                    <div className="grid grid-cols-6 gap-3 mt-4">
                         <div className="flex flex-col items-center border-r border-white/10 pr-3">
                             <span className="text-xs text-gray-500 uppercase tracking-wider">Total</span>
                             <SlideNumber value={total} className="text-lg font-bold text-white" />
@@ -106,6 +107,10 @@ const UserProfile = ({ profile }) => {
                         <div className="flex flex-col items-center">
                             <span className="text-xs text-gray-500 uppercase tracking-wider">Bronze</span>
                             <SlideNumber value={bronze} className="text-lg font-bold text-orange-400" />
+                        </div>
+                        <div className="flex flex-col items-center border-l border-white/10 pl-3">
+                            <span className="text-xs text-gray-500 uppercase tracking-wider">Puntos</span>
+                            <SlideNumber value={totalPoints.toLocaleString()} className="text-lg font-bold text-emerald-400" />
                         </div>
                     </div>
                 </div>
