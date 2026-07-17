@@ -335,6 +335,7 @@ router.get('/titles/:npCommunicationId/trophies', async (req, res) => {
             trophies: finalTrophies,
             titleName: titleName,
             platform: titleInfo?.trophyTitlePlatform || '',
+            titleIconUrl: titleInfo?.trophyTitleIconUrl || '',
             trophyGroups: finalTrophyGroups
         });
     } catch (error) {

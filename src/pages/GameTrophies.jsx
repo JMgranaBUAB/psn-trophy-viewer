@@ -2,13 +2,17 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Trophy, Lock, Unlock, Loader2, RefreshCw, BookOpen, X, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Trophy, Lock, Unlock, Loader2, RefreshCw, BookOpen, X, ExternalLink, Eye, EyeOff } from 'lucide-react';
+import useHiddenGames from '../hooks/useHiddenGames';
 
 const GameTrophies = () => {
     const { npCommunicationId } = useParams();
     const [groupedTrophies, setGroupedTrophies] = useState({});
     const [titleName, setTitleName] = useState('');
+    const [titleIconUrl, setTitleIconUrl] = useState('');
     const [platform, setPlatform] = useState('');
+    const { hiddenGames, toggleGame } = useHiddenGames();
+    const isHidden = hiddenGames.has(npCommunicationId);
     const [trophyGroupNames, setTrophyGroupNames] = useState({});
     const [filter, setFilter] = useState('unearned'); // 'all', 'earned', 'unearned'
     const [loading, setLoading] = useState(true);
@@ -107,6 +111,7 @@ const GameTrophies = () => {
 
             setGroupedTrophies(groups);
             setTitleName(response.data.titleName || '');
+            setTitleIconUrl(response.data.titleIconUrl || '');
             setPlatform(response.data.platform || '');
             setTrophyGroupNames(response.data.trophyGroups || {});
         } catch (err) {
@@ -153,22 +158,48 @@ const GameTrophies = () => {
 
                 <div className="flex items-center justify-between mb-4">
                     <h1 className="text-3xl font-bold flex items-center">
-                        <Trophy className="text-yellow-500 mr-3" size={32} />
+                        {titleIconUrl ? (
+                            <img src={titleIconUrl} alt={titleName} className="w-12 h-12 rounded-xl shadow-lg mr-4 object-cover" />
+                        ) : (
+                            <Trophy className="text-yellow-500 mr-3" size={32} />
+                        )}
                         {titleName || 'Game Trophies'}
                     </h1>
-                    {platform && (
-                        <span className={`px-3 py-1 rounded text-sm font-semibold ${platform.includes('PS5') ? 'bg-blue-600' :
-                            platform.includes('PS4') ? 'bg-blue-500' :
-                                platform.includes('VITA') ? 'bg-purple-500' :
-                                    platform.includes('PS3') ? 'bg-gray-600' :
-                                        'bg-gray-500'
-                            }`}>
-                            {platform.includes('PS5') ? 'PS5' :
-                                platform.includes('PS4') ? 'PS4' :
-                                    platform.includes('VITA') ? 'Vita' :
-                                        platform.includes('PS3') ? 'PS3' : 'PSN'}
-                        </span>
-                    )}
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => toggleGame(npCommunicationId)}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                                isHidden
+                                    ? 'bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20'
+                                    : 'bg-white/5 text-gray-400 border border-white/5 hover:bg-white/10 hover:text-white'
+                            }`}
+                        >
+                            {isHidden ? (
+                                <>
+                                    <EyeOff size={16} />
+                                    <span>Oculto</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Eye size={16} />
+                                    <span>Ocultar</span>
+                                </>
+                            )}
+                        </button>
+                        {platform && (
+                            <span className={`px-3 py-1.5 rounded text-sm font-bold shadow-md ${platform.includes('PS5') ? 'bg-blue-600 text-white' :
+                                platform.includes('PS4') ? 'bg-blue-500 text-white' :
+                                    platform.includes('VITA') ? 'bg-purple-500 text-white' :
+                                        platform.includes('PS3') ? 'bg-gray-600 text-white' :
+                                            'bg-gray-500 text-white'
+                                }`}>
+                                {platform.includes('PS5') ? 'PS5' :
+                                    platform.includes('PS4') ? 'PS4' :
+                                        platform.includes('VITA') ? 'Vita' :
+                                            platform.includes('PS3') ? 'PS3' : 'PSN'}
+                            </span>
+                        )}
+                    </div>
                 </div>
 
                 {/* Filter Controls */}
