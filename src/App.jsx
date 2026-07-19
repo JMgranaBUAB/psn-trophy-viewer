@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { Gamepad2, Loader2, AlertCircle, LogOut, Trophy, RefreshCw, Clock, Diamond, Filter, Sparkles } from 'lucide-react';
+import { Gamepad2, Loader2, AlertCircle, LogOut, Trophy, RefreshCw, Clock, Diamond, Filter, Sparkles, Search } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import UserProfile from './components/UserProfile';
 import TrophyList from './components/TrophyList';
@@ -25,8 +25,13 @@ function Dashboard() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
   const { hiddenGames, hiddenCount, toggleGame, isHidden, exportHiddenGames, importHiddenGames } = useHiddenGames();
+
+  const filteredTitles = titles.filter(t => 
+    t.trophyTitleName && t.trophyTitleName.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleLogout = async () => {
     try {
@@ -179,12 +184,24 @@ function Dashboard() {
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000">
               {profile && <UserProfile profile={profile} />}
               <div className="mb-8">
-                <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
-                  <Trophy size={20} className="text-yellow-500" />
-                  Juegos Recientes
-                  ({titles.filter(t => !hiddenGames.has(t.npCommunicationId)).length})
-                </h3>
-                <TrophyList titles={titles} hiddenGames={hiddenGames} onHide={toggleGame} />
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+                  <h3 className="text-xl font-semibold flex items-center gap-2 m-0">
+                    <Trophy size={20} className="text-yellow-500" />
+                    Juegos Recientes
+                    ({filteredTitles.filter(t => !hiddenGames.has(t.npCommunicationId)).length})
+                  </h3>
+                  <div className="relative w-full sm:w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                    <input
+                      type="text"
+                      placeholder="Buscar juego..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all text-white placeholder-gray-500"
+                    />
+                  </div>
+                </div>
+                <TrophyList titles={filteredTitles} hiddenGames={hiddenGames} onHide={toggleGame} />
               </div>
             </div>
           )}
