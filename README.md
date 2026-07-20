@@ -20,14 +20,18 @@ A modern, high-performance React application for viewing your PlayStation Networ
 ### 🏆 Advanced Trophy & Stats Tracking
 - **Complete Library Sync**: Bypasses standard limits to load your **entire** game library history using PSN API pagination.
 - **Play Time Tracking**: Matches and displays total hours played across your games (works automatically for PS4/PS5 titles with playtime data recorded by PSN).
-- **Top 20 Leaderboard**: A dedicated page showcasing your top 20 most played games, featuring animated progress bars and premium podium styling.
+- **Multiple Leaderboards**: Dedicated pages for your **Top 20** most played games, **Rarest Trophies** (Raros), and **Top Easiest Trophies** (Fáciles), featuring animated progress bars and premium styling.
 - **Smart Grouping**: Automatically separates base game trophies from DLC/Add-on packs.
 - **Total Points System**: Calculates and displays the earned vs. total PSN points per DLC/Game (Platinum=300, Gold=90, Silver=30, Bronze=15).
 - **Spanish Translation**: Automatic machine translation for all trophy titles and descriptions, displayed elegantly inline.
 - **Auto-Sorting**: Trophies are automatically sorted by rarity (rarest first) for a better overview.
 - **Trophy Guide Lookup**: Click the book icon on any trophy to instantly search for solutions across top guide sites (PSNProfiles, PSTHC, PowerPyx, PlayStationTrophies.org, YouTube, and Google).
+
 ### 🎯 Pro Dashboard & UI
 - **Live Profile Widget**: A standalone, auto-refreshing profile card route (`/widget`) designed specifically for OBS overlays, secondary monitors, or streaming setups (refreshes every 5 minutes).
+- **Quick Search & Filtering**: Instantly find any game in your library using the integrated search bar.
+- **Game Visibility Management**: Hide and unhide specific games from your dashboard and game view to keep your list clean and focused.
+- **Rich Visuals**: High-quality game icons are dynamically loaded and displayed next to titles, keeping the UI visually immersive.
 - **Neon Highlights**: Games with a Platinum trophy glow with a triple-layered cyan/blue neon effect. Games with 100% completion (but no platinum) glow with a premium gold aesthetic.
 - **Responsive Layout**: perfectly centered interfaces (`flex`, `items-center`) that adapt naturally to ultra-wide displays and smartphones.
 - **Platform Badges**: Visual indicators for PS5, PS4, PS3, and Vita titles.
