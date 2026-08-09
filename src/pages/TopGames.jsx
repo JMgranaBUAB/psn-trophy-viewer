@@ -57,7 +57,8 @@ const TopGames = () => {
                     .slice(0, 20);
                 setTitles(withTime);
             } catch (err) {
-                setError(err.response?.data?.error || err.message);
+                const rawErr = err.response?.data?.error || err.message || 'Error desconocido';
+                setError(typeof rawErr === 'string' ? rawErr : (rawErr?.message || JSON.stringify(rawErr)));
             } finally {
                 setLoading(false);
             }

@@ -74,8 +74,8 @@ function Dashboard() {
 
     } catch (err) {
       console.error("Error fetching PSN data:", err);
-      const errorMsg = err.response?.data?.error || err.message || "Error al cargar los datos.";
-      setError(errorMsg);
+      const rawError = err.response?.data?.error || err.message || "Error al cargar los datos.";
+      setError(typeof rawError === 'string' ? rawError : (rawError?.message || JSON.stringify(rawError)));
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -245,7 +245,7 @@ function App() {
 
   useEffect(() => {
     // Catch window errors to prevent blank screen
-    const handleError = (e) => setRuntimeError(e.message);
+    const handleError = (e) => setRuntimeError(typeof e.message === 'string' ? e.message : String(e.message || e));
     window.addEventListener('error', handleError);
 
     // 45 second safety fallback (increased for very slow cold starts)

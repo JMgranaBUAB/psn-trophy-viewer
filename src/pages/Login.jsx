@@ -34,7 +34,8 @@ const Login = ({ onLoginSuccess }) => {
                 navigate('/');
             }
         } catch (err) {
-            setError(err.response?.data?.error || 'Error al autenticar. Verifica el código NPSSO.');
+            const rawErr = err.response?.data?.error || 'Error al autenticar. Verifica el código NPSSO.';
+            setError(typeof rawErr === 'string' ? rawErr : (rawErr?.message || JSON.stringify(rawErr)));
         } finally {
             setLoading(false);
         }

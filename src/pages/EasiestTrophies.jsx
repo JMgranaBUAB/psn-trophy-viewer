@@ -251,7 +251,8 @@ const EasiestTrophies = () => {
                 setClosestToPlat(res.data?.closestToPlat || []);
                 setTotalProcessed(res.data?.totalProcessed || 0);
             } catch (err) {
-                setError(err.response?.data?.error || err.message);
+                const rawErr = err.response?.data?.error || err.message || 'Error desconocido';
+                setError(typeof rawErr === 'string' ? rawErr : (rawErr?.message || JSON.stringify(rawErr)));
             } finally {
                 setLoading(false);
             }
