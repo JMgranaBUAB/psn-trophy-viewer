@@ -1,0 +1,10 @@
+services:
+  psn-react:
+    build: .
+    container_name: psn-react-app
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+    restart: unless-stopped
